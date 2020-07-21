@@ -1,0 +1,17 @@
+---
+PreCommit:
+  YamlLint:
+    enabled: true
+    required: true
+    on_warn: fail
+    description: 'Analyze with yamllint'
+    required_executable: 'yamllint'
+    flags:
+      - '--format=parsable'
+      - '--strict'
+    install_command: 'pip install yamllint'
+    include:
+      - '**/*.yaml'
+      - '**/*.yml'
+
+# vim: et sw=2 ts=2
