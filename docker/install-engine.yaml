@@ -1,0 +1,75 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  vars:
+    # (un)comment items to select the desired repositories
+    repositories:
+      - stable
+      # - nightly
+      # - test
+
+  pre_tasks:
+    - name: Determine name of Debian distribution
+      shell: >
+        [[ -e /etc/debian_version ]]
+        && source /etc/os-release
+        && echo ${DEBIAN_CODENAME:-$VERSION_CODENAME}
+      args:
+        executable: /bin/bash
+      register: codename
+      changed_when: false
+
+    - name: Determine architecture packages are installed for
+      command: dpkg --print-architecture
+      register: arch
+      changed_when: false
+
+  tasks:
+    - name: Uninstall old versions
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+
+    - name: Add Docker’s official GPG key
+      apt_key:
+        id: 0EBFCD88
+        url: https://download.docker.com/linux/debian/gpg
+
+    - name: Add repository
+      apt_repository:
+        repo: >
+          deb [arch={{ arch.stdout }}] https://download.docker.com/linux/debian
+          {{ codename.stdout }} {{ repositories | join(' ') }}
+        filename: docker
+        update_cache: true
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+
+    - name: Start and enable service docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add current user to group docker
+      user:
+        name: "{{ ansible_user }}"
+        groups:
+          - docker
+        append: true
+
+# vim: et sw=2 ts=2

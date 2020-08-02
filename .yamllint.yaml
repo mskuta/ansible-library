@@ -1,0 +1,5 @@
+---
+rules:
+  line-length: {max: 120, allow-non-breakable-words: true}
+
+# vim: et sw=2 ts=2

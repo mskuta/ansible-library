@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Install packages curl and jq
+      apt:
+        name:
+          - curl
+          - jq
+
+    - name: Determine download URL of Compose
+      shell: >
+        curl --fail --silent --show-error https://api.github.com/repos/docker/compose/releases/latest
+        | jq --raw-output '.assets[].browser_download_url'
+        | grep -e "/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}$"
+      args:
+        warn: false
+      register: download_url
+      changed_when: false
+
+    - name: Determine download checksum of Compose
+      shell: >
+        curl --fail --location --silent --show-error {{ download_url.stdout }}.sha256
+        | cut -d ' ' -f 1
+      args:
+        warn: false
+      register: download_checksum
+      changed_when: false
+
+  tasks:
+    - name: Install Compose
+      get_url:
+        url: "{{ download_url.stdout }}"
+        checksum: sha256:{{ download_checksum.stdout }}
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+# vim: et sw=2 ts=2
