@@ -1,0 +1,83 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  vars:
+    repository: stable  # other possible values: nightly, test
+    links: []
+
+  pre_tasks:
+    - name: Determine name of Debian distribution
+      shell: >
+        [[ -e /etc/debian_version ]]
+        && source /etc/os-release
+        && echo ${DEBIAN_CODENAME:-$VERSION_CODENAME}
+      args:
+        executable: /bin/bash
+      register: codename
+      changed_when: false
+
+    - name: Determine architecture packages are installed for
+      command: dpkg --print-architecture
+      register: arch
+      changed_when: false
+
+    - name: Install package curl
+      apt:
+        name:
+          - curl
+
+    - name: Find latest .deb files
+      shell: >
+        curl --fail --silent --show-error https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/
+        | sed 's/<[^>]*>//g'
+        | grep -o '{{ item }}_.*\.deb'
+        | tail -n 1
+      args:
+        warn: false
+      register: files
+      changed_when: false
+      loop:
+        # the order here is important for the upcoming installation because of
+        # mutual dependencies
+        - containerd.io
+        - docker-ce-cli
+        - docker-ce
+
+    - name: Build list of download links
+      set_fact:
+        links: "{{ links }} + [ 'https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/{{ item.stdout }}' ]"
+      loop: "{{ files.results }}"
+
+  tasks:
+    - name: Uninstall old versions
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+
+    - name: Install Docker Engine
+      apt:
+        deb: "{{ item }}"
+      loop: "{{ links }}"
+
+    - name: Start and enable service docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add current user to group docker
+      user:
+        name: "{{ ansible_user }}"
+        groups:
+          - docker
+        append: true
+
+# vim: et sw=2 ts=2
