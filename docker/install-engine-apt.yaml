@@ -49,7 +49,6 @@
           deb [arch={{ arch.stdout }}] https://download.docker.com/linux/debian
           {{ codename.stdout }} {{ repositories | join(' ') }}
         filename: docker
-        update_cache: true
 
     - name: Install Docker Engine
       apt:
@@ -58,6 +57,7 @@
           - docker-ce-cli
           - containerd.io
         state: latest
+        update_cache: true
 
     - name: Start and enable service docker
       service:
