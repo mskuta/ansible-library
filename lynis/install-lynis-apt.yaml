@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: install-lynis-apt | Import key
+      apt_key:
+        id: C80E383C3DE9F082E01391A0366C67DE91CA5D5F
+        keyserver: keyserver.ubuntu.com
+
+    - name: install-lynis-apt | Add repository
+      apt_repository:
+        repo: >
+          deb https://packages.cisofy.com/community/lynis/deb/ stable main
+        filename: cisofy-lynis
+
+    - name: install-lynis-apt | Install package
+      apt:
+        name: lynis
+        state: latest
+        update_cache: true
+
+# vim: et sw=2 ts=2
