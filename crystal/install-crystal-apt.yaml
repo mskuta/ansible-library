@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  vars:
+    # set appropriate Debian branch (Unstable, Testing, 9.0, 10)
+    repository: Testing
+
+  tasks:
+    - name: install-crystal-apt | Import key
+      apt_key:
+        url: https://download.opensuse.org/repositories/devel:languages:crystal/Debian_{{ repository }}/Release.key
+
+    - name: install-crystal-apt | Add repository
+      apt_repository:
+        repo: >
+          deb http://download.opensuse.org/repositories/devel:/languages:/crystal/Debian_{{ repository }}/ /
+        filename: devel:languages:crystal.list
+
+    - name: install-crystal-apt | Install crystal package
+      apt:
+        name: crystal
+        state: latest
+        update_cache: true
+
+    - name: install-crystal-apt | Install recommended packages
+      apt:
+        name:
+          - libssl-dev
+          - libxml2-dev
+          - libyaml-dev
+          - libgmp-dev
+          - libz-dev
+        state: latest
+        update_cache: true
+
+# vim: et sw=2 ts=2
