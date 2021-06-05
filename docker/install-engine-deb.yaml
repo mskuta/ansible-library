@@ -9,7 +9,7 @@
     links: []
 
   pre_tasks:
-    - name: Determine name of Debian distribution
+    - name: install-engine-deb | Determine name of Debian distribution
       shell: >
         [[ -e /etc/debian_version ]]
         && source /etc/os-release
@@ -19,17 +19,17 @@
       register: codename
       changed_when: false
 
-    - name: Determine architecture packages are installed for
+    - name: install-engine-deb | Determine architecture packages are installed for
       command: dpkg --print-architecture
       register: arch
       changed_when: false
 
-    - name: Install package curl
+    - name: install-engine-deb | Install helper package
       apt:
         name:
           - curl
 
-    - name: Find latest .deb files
+    - name: install-engine-deb | Find latest packages
       shell: >
         curl --fail --silent --show-error https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/
         | sed 's/<[^>]*>//g'
@@ -46,13 +46,13 @@
         - docker-ce-cli
         - docker-ce
 
-    - name: Build list of download links
+    - name: install-engine-deb | Build list of download links
       set_fact:
         links: "{{ links }} + [ 'https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/{{ item.stdout }}' ]"
       loop: "{{ files.results }}"
 
   tasks:
-    - name: Uninstall old versions
+    - name: install-engine-deb | Uninstall old versions
       apt:
         name:
           - docker
@@ -62,18 +62,18 @@
           - runc
         state: absent
 
-    - name: Install Docker Engine
+    - name: install-engine-deb | Install packages
       apt:
         deb: "{{ item }}"
       loop: "{{ links }}"
 
-    - name: Start and enable service docker
+    - name: install-engine-deb | Start and enable service
       service:
         name: docker
         state: started
         enabled: true
 
-    - name: Add current user to group docker
+    - name: install-engine-deb | Add current user to group
       user:
         name: "{{ ansible_user }}"
         groups:

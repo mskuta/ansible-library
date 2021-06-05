@@ -5,13 +5,13 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Install packages curl and jq
+    - name: install-compose | Install helper packages
       apt:
         name:
           - curl
           - jq
 
-    - name: Determine download URL of Compose
+    - name: install-compose | Determine download URL
       shell: >
         curl --fail --silent --show-error https://api.github.com/repos/docker/compose/releases/latest
         | jq --raw-output '.assets[].browser_download_url'
@@ -21,7 +21,7 @@
       register: download_url
       changed_when: false
 
-    - name: Determine download checksum of Compose
+    - name: install-compose | Determine download checksum
       shell: >
         curl --fail --location --silent --show-error {{ download_url.stdout }}.sha256
         | cut -d ' ' -f 1
@@ -31,7 +31,7 @@
       changed_when: false
 
   tasks:
-    - name: Install Compose
+    - name: install-compose | Install program
       get_url:
         url: "{{ download_url.stdout }}"
         checksum: sha256:{{ download_checksum.stdout }}

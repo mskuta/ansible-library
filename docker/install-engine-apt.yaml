@@ -12,7 +12,7 @@
       # - test
 
   pre_tasks:
-    - name: Determine name of Debian distribution
+    - name: install-engine-apt | Determine name of Debian distribution
       shell: >
         [[ -e /etc/debian_version ]]
         && source /etc/os-release
@@ -22,13 +22,13 @@
       register: codename
       changed_when: false
 
-    - name: Determine architecture packages are installed for
+    - name: install-engine-apt | Determine architecture packages are installed for
       command: dpkg --print-architecture
       register: arch
       changed_when: false
 
   tasks:
-    - name: Uninstall old versions
+    - name: install-engine-apt | Uninstall old versions
       apt:
         name:
           - docker
@@ -38,19 +38,19 @@
           - runc
         state: absent
 
-    - name: Add Docker’s official GPG key
+    - name: install-engine-apt | Import key
       apt_key:
         id: 0EBFCD88
         url: https://download.docker.com/linux/debian/gpg
 
-    - name: Add repository
+    - name: install-engine-apt | Add repository
       apt_repository:
         repo: >
           deb [arch={{ arch.stdout }}] https://download.docker.com/linux/debian
           {{ codename.stdout }} {{ repositories | join(' ') }}
         filename: docker
 
-    - name: Install Docker Engine
+    - name: install-engine-apt | Install packages
       apt:
         name:
           - docker-ce
@@ -59,13 +59,13 @@
         state: latest
         update_cache: true
 
-    - name: Start and enable service docker
+    - name: install-engine-apt | Start and enable service
       service:
         name: docker
         state: started
         enabled: true
 
-    - name: Add current user to group docker
+    - name: install-engine-apt | Add current user to group
       user:
         name: "{{ ansible_user }}"
         groups:

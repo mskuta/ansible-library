@@ -19,7 +19,7 @@
           deb http://download.opensuse.org/repositories/devel:/languages:/crystal/Debian_{{ repository }}/ /
         filename: devel:languages:crystal.list
 
-    - name: install-crystal-apt | Install crystal package
+    - name: install-crystal-apt | Install package
       apt:
         name: crystal
         state: latest
