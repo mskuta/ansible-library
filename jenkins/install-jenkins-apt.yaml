@@ -1,0 +1,30 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: install-jenkins-apt | Import key
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+
+    - name: install-jenkins-apt | Add repository
+      apt_repository:
+        repo: >
+          deb https://pkg.jenkins.io/debian-stable binary/
+        filename: jenkins
+
+    - name: install-jenkins-apt | Install Java runtime
+      apt:
+        name: default-jre-headless
+        state: latest
+        update_cache: true
+
+    - name: install-jenkins-apt | Install package
+      apt:
+        name: jenkins
+        state: latest
+        update_cache: true
+
+# vim: et sw=2 ts=2
