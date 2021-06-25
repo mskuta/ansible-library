@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - vars.yaml
+
+  tasks:
+    - name: nonet | Delete script
+      file:
+        path: /usr/local/bin/nonet
+        state: absent
+
+    - name: nonet | Examine packet filter rules
+      command: "/usr/sbin/iptables -S"
+      register: rules
+      changed_when: false
+
+    # Ansible module "iptables" does not support iptables extension
+    # "owner", that is why "command" is used
+    - name: nonet | Remove packet filter rule
+      command: "/usr/sbin/iptables {{ rule | regex_replace('^-A(.*)$', '-D\\1') }}"
+      when: rule in rules.stdout
+
+    - name: nonet | Delete group
+      group:
+        name: "{{ group['name'] }}"
+        state: absent
+
+# vim: et sw=2 ts=2

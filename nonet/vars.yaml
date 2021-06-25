@@ -1,0 +1,7 @@
+---
+group:
+  id: 404
+  name: nonet
+rule: -A OUTPUT -m owner --gid-owner {{ group['id'] }} -j DROP
+
+# vim: et sw=2 ts=2

@@ -9,7 +9,7 @@ This playbook creates a packet filtering rule that prevents programs, that are f
 
 Run the following command to have all necessary installation steps performed automatically on localhost:
 
-	ansible-playbook -K main.yaml
+	ansible-playbook -K install.yaml
 
 
 # Usage
