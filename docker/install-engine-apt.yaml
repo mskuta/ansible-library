@@ -67,7 +67,7 @@
 
     - name: install-engine-apt | Add current user to group
       user:
-        name: "{{ ansible_user }}"
+        name: "{{ lookup('env', 'USER') }}"
         groups:
           - docker
         append: true

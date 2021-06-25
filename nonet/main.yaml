@@ -19,7 +19,7 @@
 
     - name: nonet | Add current user to group
       user:
-        name: "{{ ansible_user }}"
+        name: "{{ lookup('env', 'USER') }}"
         groups:
           - "{{ group['name'] }}"
         append: true
