@@ -8,12 +8,11 @@
     - name: install-compose | Install helper packages
       apt:
         name:
-          - curl
           - jq
 
     - name: install-compose | Determine download URL
       shell: >
-        curl --fail --silent --show-error https://api.github.com/repos/docker/compose/releases/latest
+        wget --no-verbose --output-document=- https://api.github.com/repos/docker/compose/releases/latest
         | jq --raw-output '.assets[].browser_download_url'
         | grep -e "/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}$"
       args:
@@ -23,7 +22,7 @@
 
     - name: install-compose | Determine download checksum
       shell: >
-        curl --fail --location --silent --show-error {{ download_url.stdout }}.sha256
+        wget --no-verbose --output-document=- {{ download_url.stdout }}.sha256
         | cut -d ' ' -f 1
       args:
         warn: false

@@ -15,14 +15,9 @@
       register: arch
       changed_when: false
 
-    - name: install-engine-deb | Install helper package
-      apt:
-        name:
-          - curl
-
     - name: install-engine-deb | Find latest packages
       shell: >
-        curl --fail --silent --show-error https://download.docker.com/linux/{{ distro }}/dists/{{ ansible_facts.distribution_release }}/pool/{{ repository }}/{{ arch.stdout }}/
+        wget --no-verbose --output-document=- https://download.docker.com/linux/{{ distro }}/dists/{{ ansible_facts.distribution_release }}/pool/{{ repository }}/{{ arch.stdout }}/
         | sed 's/<[^>]*>//g'
         | grep -o '{{ item }}_.*\.deb'
         | tail -n 1
