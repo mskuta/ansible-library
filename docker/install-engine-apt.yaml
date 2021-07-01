@@ -2,7 +2,7 @@
 - hosts: localhost
   connection: local
   become: true
-  gather_facts: false
+  gather_facts: true
 
   vars:
     # (un)comment items to select the desired repositories
@@ -10,18 +10,9 @@
       - stable
       # - nightly
       # - test
+    distro: "{{ ansible_facts.distribution | lower | replace('pop!_os', 'ubuntu') }}"
 
   pre_tasks:
-    - name: install-engine-apt | Determine name of Debian distribution
-      shell: >
-        [[ -e /etc/debian_version ]]
-        && source /etc/os-release
-        && echo ${DEBIAN_CODENAME:-$VERSION_CODENAME}
-      args:
-        executable: /bin/bash
-      register: codename
-      changed_when: false
-
     - name: install-engine-apt | Determine architecture packages are installed for
       command: dpkg --print-architecture
       register: arch
@@ -40,14 +31,16 @@
 
     - name: install-engine-apt | Import key
       apt_key:
-        id: 0EBFCD88
-        url: https://download.docker.com/linux/debian/gpg
+        url: https://download.docker.com/linux/{{ distro }}/gpg
 
     - name: install-engine-apt | Add repository
       apt_repository:
         repo: >
-          deb [arch={{ arch.stdout }}] https://download.docker.com/linux/debian
-          {{ codename.stdout }} {{ repositories | join(' ') }}
+          deb
+          [arch={{ arch.stdout }}]
+          https://download.docker.com/linux/{{ distro }}
+          {{ ansible_facts.distribution_release }}
+          {{ repositories | join(' ') }}
         filename: docker
 
     - name: install-engine-apt | Install packages

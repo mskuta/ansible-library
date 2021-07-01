@@ -2,23 +2,14 @@
 - hosts: localhost
   connection: local
   become: true
-  gather_facts: false
+  gather_facts: true
 
   vars:
     repository: stable  # other possible values: nightly, test
     links: []
+    distro: "{{ ansible_facts.distribution | lower | replace('pop!_os', 'ubuntu') }}"
 
   pre_tasks:
-    - name: install-engine-deb | Determine name of Debian distribution
-      shell: >
-        [[ -e /etc/debian_version ]]
-        && source /etc/os-release
-        && echo ${DEBIAN_CODENAME:-$VERSION_CODENAME}
-      args:
-        executable: /bin/bash
-      register: codename
-      changed_when: false
-
     - name: install-engine-deb | Determine architecture packages are installed for
       command: dpkg --print-architecture
       register: arch
@@ -31,7 +22,7 @@
 
     - name: install-engine-deb | Find latest packages
       shell: >
-        curl --fail --silent --show-error https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/
+        curl --fail --silent --show-error https://download.docker.com/linux/{{ distro }}/dists/{{ ansible_facts.distribution_release }}/pool/{{ repository }}/{{ arch.stdout }}/
         | sed 's/<[^>]*>//g'
         | grep -o '{{ item }}_.*\.deb'
         | tail -n 1
@@ -48,7 +39,7 @@
 
     - name: install-engine-deb | Build list of download links
       set_fact:
-        links: "{{ links }} + [ 'https://download.docker.com/linux/debian/dists/{{ codename.stdout }}/pool/{{ repository }}/{{ arch.stdout }}/{{ item.stdout }}' ]"
+        links: "{{ links }} + [ 'https://download.docker.com/linux/{{ distro }}/dists/{{ ansible_facts.distribution_release }}/pool/{{ repository }}/{{ arch.stdout }}/{{ item.stdout }}' ]"
       loop: "{{ files.results }}"
 
   tasks:
